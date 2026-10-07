@@ -1,6 +1,6 @@
 AI USE
 
-Tool: Claude Code (Claude Sonnet 5.5), run in the Claude desktop app.
+Tool: Claude Code (Claude Sonnet 5.5)
 
 What I used it for
 - Unzipping the project pack and reading the brief and the three CSVs.
@@ -10,8 +10,7 @@ What I used it for
   cross-check the matcher's output against the bank feed.
 
 What I did myself / reviewed
-- [Edit this section before submitting: describe what you personally checked and decided,
-  e.g. the period rule, the L006 handling, the hold on R1016, and that you re-ran the numbers.]
+-Reviewed the PLAN.md, advised the claude code to send out multiple agents and ran test.
 
 Example where the AI got something wrong, and how it was caught
 The first version of the matcher matched a refunded Airbnb reservation's original deposit
