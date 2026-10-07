@@ -1,0 +1,10 @@
+kind,ref,amount,reason
+period_straddle,R1001,1260.00,"Stay 2026-08-28 to 2026-09-03 is not wholly inside September; included in September per the export, confirm period rule"
+no_owner_agreement,R1007,660.00,"Listing L006 (Highland Park Casita) has no row in owner_agreements; owner and commission unknown, payout not calculated"
+no_owner_agreement,R1017,340.00,"Listing L006 (Highland Park Casita) has no row in owner_agreements; owner and commission unknown, payout not calculated"
+period_straddle,R1022,1365.00,"Stay 2026-09-27 to 2026-10-04 is not wholly inside September; included in September per the export, confirm period rule"
+duplicate_deposit,TXN50170,1552.00,"Identical to TXN50153 (same date, amount, description); possible double payment, confirm with channel before treating as income"
+matched_with_variance,R1018,0.02,"Within rounding: expected 785.70, received 785.72 (diff 0.02)"
+matched_with_variance,R1014,0.00,"Refund 155.00: deposit 693.55 + adjustment -150.35 nets 543.20 as expected, but each leg is off by 4.65 (channel appears to have netted its fee on the refund); net agrees"
+unmatched_deposit,TXN50391,450.00,ZELLE FROM K OKAFOR: Not from a known channel (Airbnb / Vrbo / GuestyPay); no reservation can be tied to it
+missing_deposit,R1016,932.80,"vrbo HA-1016: expected 932.80 around 2026-09-23, no matching deposit in the bank feed"

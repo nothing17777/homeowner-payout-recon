@@ -1,0 +1,25 @@
+owner,listing_id,listing,reservation_id,channel,check_in,check_out,status,accommodation,refund,gross_rental,channel_fee,commission_pct,commission,cleaning_to_owner,payout,bank_status
+Dana Whitfield,L001,Silver Lake Bungalow,R1001,airbnb,2026-08-28,2026-09-03,confirmed,1260.00,0.00,1260.00,42.30,0.20,243.54,0,974.16,reconciled
+Dana Whitfield,L001,Silver Lake Bungalow,R1006,airbnb,2026-09-05,2026-09-09,confirmed,820.00,0.00,820.00,29.10,0.20,158.18,0,632.72,reconciled
+Dana Whitfield,L001,Silver Lake Bungalow,R1012,vrbo,2026-09-13,2026-09-17,confirmed,860.00,0.00,860.00,80.80,0.20,155.84,0,623.36,reconciled
+Dana Whitfield,L001,Silver Lake Bungalow,R1018,airbnb,2026-09-20,2026-09-23,confirmed,660.00,0.00,660.00,24.30,0.20,127.14,0,508.56,reconciled (rounding diff)
+Dana Whitfield,L001,Silver Lake Bungalow,R1024,airbnb,2026-09-26,2026-09-29,confirmed,585.00,0.00,585.00,22.05,0.20,112.59,0,450.36,reconciled
+Dana Whitfield,L004,Los Feliz Craftsman,R1004,airbnb,2026-09-04,2026-09-07,confirmed,780.00,0.00,780.00,28.65,0.20,150.27,0,601.08,reconciled
+Dana Whitfield,L004,Los Feliz Craftsman,R1010,vrbo,2026-09-11,2026-09-14,cancelled,765.00,765.00,0.00,0,0.20,0.00,0,0.00,no cash expected (cancelled)
+Dana Whitfield,L004,Los Feliz Craftsman,R1015,direct,2026-09-17,2026-09-19,confirmed,530.00,0.00,530.00,23.61,0.20,101.28,0,405.11,reconciled
+Dana Whitfield,L004,Los Feliz Craftsman,R1021,airbnb,2026-09-24,2026-09-27,confirmed,810.00,0.00,810.00,29.55,0.20,156.09,0,624.36,reconciled
+Marcus Oyelaran,L002,Venice Canal Loft,R1002,vrbo,2026-09-01,2026-09-05,confirmed,1360.00,0.00,1360.00,124.80,0.25,308.80,200.00,1126.40,reconciled
+Marcus Oyelaran,L002,Venice Canal Loft,R1008,direct,2026-09-08,2026-09-12,confirmed,1320.00,0.00,1320.00,50.55,0.25,317.36,200.00,1152.09,reconciled
+Marcus Oyelaran,L002,Venice Canal Loft,R1013,airbnb,2026-09-15,2026-09-19,confirmed,1400.00,0.00,1400.00,48.00,0.25,338.00,200.00,1214.00,reconciled
+Marcus Oyelaran,L002,Venice Canal Loft,R1019,airbnb,2026-09-22,2026-09-26,confirmed,1380.00,0.00,1380.00,47.40,0.25,333.15,200.00,1199.45,reconciled
+Priya Raman,L003,Echo Park Studio,R1003,direct,2026-09-02,2026-09-04,confirmed,290.00,0.00,290.00,13.03,0.18,49.85,0,227.12,reconciled
+Priya Raman,L003,Echo Park Studio,R1009,airbnb,2026-09-09,2026-09-13,confirmed,600.00,0.00,600.00,20.85,0.18,104.25,0,474.90,reconciled
+Priya Raman,L003,Echo Park Studio,R1014,airbnb,2026-09-16,2026-09-20,confirmed,620.00,155.00,465.00,16.80,0.18,80.68,0,367.52,reconciled (refund netted)
+Priya Raman,L003,Echo Park Studio,R1020,direct,2026-09-23,2026-09-25,confirmed,300.00,0.00,300.00,13.36,0.18,51.60,0,235.04,reconciled
+Priya Raman,L003,Echo Park Studio,R1023,airbnb,2026-09-25,2026-09-29,confirmed,640.00,0.00,640.00,22.05,0.18,111.23,0,506.72,reconciled
+Tom & Lisa Becker,L005,Mar Vista Cottage,R1005,airbnb,2026-09-04,2026-09-06,confirmed,360.00,0.00,360.00,14.40,0.22,76.03,120.00,389.57,reconciled
+Tom & Lisa Becker,L005,Mar Vista Cottage,R1011,direct,2026-09-12,2026-09-15,confirmed,555.00,0.00,555.00,22.62,0.22,117.12,120.00,535.26,reconciled
+Tom & Lisa Becker,L005,Mar Vista Cottage,R1016,vrbo,2026-09-18,2026-09-22,confirmed,760.00,0.00,760.00,70.40,0.22,151.71,120.00,657.89,NOT RECEIVED
+Tom & Lisa Becker,L005,Mar Vista Cottage,R1022,airbnb,2026-09-27,2026-10-04,confirmed,1365.00,0.00,1365.00,44.55,0.22,290.50,120.00,1149.95,reconciled
+UNASSIGNED (no agreement),L006,Highland Park Casita,R1007,airbnb,2026-09-06,2026-09-10,confirmed,660.00,0.00,660.00,23.10,,,0,,reconciled
+UNASSIGNED (no agreement),L006,Highland Park Casita,R1017,vrbo,2026-09-19,2026-09-21,confirmed,340.00,0.00,340.00,36.00,,,0,,reconciled

@@ -1,0 +1,28 @@
+AI USE
+
+Tool: Claude Code (Claude Sonnet 5.5), run in the Claude desktop app.
+
+What I used it for
+- Unzipping the project pack and reading the brief and the three CSVs.
+- Scaffolding the project and writing the first draft of the code (loader, payout rules,
+  reconciliation matcher, CLI), the unit tests, and a draft of the README.
+- Working out the expected deposit for each reservation by hand from the brief's rules, to
+  cross-check the matcher's output against the bank feed.
+
+What I did myself / reviewed
+- [Edit this section before submitting: describe what you personally checked and decided,
+  e.g. the period rule, the L006 handling, the hold on R1016, and that you re-ran the numbers.]
+
+Example where the AI got something wrong, and how it was caught
+The first version of the matcher matched a refunded Airbnb reservation's original deposit
+on its own and never looked for the negative refund adjustment that followed it. The
+adjustment was left over as an orphan "unmatched refund", and the reservation was shown as
+fully reconciled even though the bank had clawed back part of it. The real data did not
+expose this: R1014's two legs are each off by 4.65, so it took a different code path. A
+unit test I wrote for the clean case (deposit 240, later adjustment -50 on a reservation
+refunded 50) failed with status "reconciled" instead of "reconciled (refund netted)".
+The fix attaches the adjustment to the existing match (step 1b in payout_recon/reconcile.py).
+
+A second, smaller one: the first draft of the exceptions list left out matches that only
+reconciled within a tolerance (R1018, off by $0.02) or net of a refund (R1014). The brief
+asks for "anything that doesn't reconcile", so I added them as `matched_with_variance`.
