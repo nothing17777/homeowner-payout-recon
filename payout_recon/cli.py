@@ -8,6 +8,7 @@ from pathlib import Path
 from .data import load_agreements, load_deposits, load_reservations
 from .payouts import expected_deposit, owner_payout
 from .reconcile import data_quality, reconcile
+from .report import render
 
 UNASSIGNED = "UNASSIGNED (no agreement)"
 
@@ -68,6 +69,8 @@ def main(argv=None):
               ["reservations", "deposits", "expected", "received", "note"],
               [[" + ".join(r.reservation_id for r in m.reservations), " + ".join(d.txn_id for d in m.deposits),
                 m.expected, m.actual, m.note] for m in recon.matches])
+
+    (out / "report.html").write_text(render(lines, recon, issues, totals, UNASSIGNED), encoding="utf-8")
 
     print("OWNER PAYOUTS - September 2026")
     for owner, total in sorted(totals.items()):

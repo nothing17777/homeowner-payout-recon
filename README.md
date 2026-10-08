@@ -18,6 +18,7 @@ Outputs (`output/`, committed so you can read them without running anything):
 | `owner_totals.csv` | Total payout per owner |
 | `reconciliation_exceptions.csv` | Everything that does not reconcile, with a reason |
 | `reconciliation_matches.csv` | Every deposit-to-reservation match (audit trail) |
+| `report.html` | Single-page web view of all of the above; open it in a browser |
 
 ## September result
 
