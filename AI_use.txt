@@ -1,27 +1,38 @@
 AI USE
-
+ 
 Tool: Claude Code (Claude Sonnet 5.5)
-
+ 
 What I used it for
-- Unzipping the project pack and reading the brief and the three CSVs.
-- Scaffolding the project and writing the first draft of the code (loader, payout rules,
-  reconciliation matcher, CLI), the unit tests, and a draft of the README.
-- Working out the expected deposit for each reservation by hand from the brief's rules, to
-  cross-check the matcher's output against the bank feed.
-
-What I did myself / reviewed
--Reviewed the PLAN.md, advised the claude code to send out multiple agents and ran test.
-
-Example where the AI got something wrong, and how it was caught
-The first version of the matcher matched a refunded Airbnb reservation's original deposit
-on its own and never looked for the negative refund adjustment that followed it. The
-adjustment was left over as an orphan "unmatched refund", and the reservation was shown as
-fully reconciled even though the bank had clawed back part of it. The real data did not
-expose this: R1014's two legs are each off by 4.65, so it took a different code path. A
-unit test I wrote for the clean case (deposit 240, later adjustment -50 on a reservation
-refunded 50) failed with status "reconciled" instead of "reconciled (refund netted)".
-The fix attaches the adjustment to the existing match (step 1b in payout_recon/reconcile.py).
-
-A second, smaller one: the first draft of the exceptions list left out matches that only
-reconciled within a tolerance (R1018, off by $0.02) or net of a refund (R1014). The brief
-asks for "anything that doesn't reconcile", so I added them as `matched_with_variance`.
+- Unpacking the project and reading the brief and the three CSVs.
+- Scaffolding the project and drafting the loader, payout rules, reconciliation
+  matcher, CLI, unit tests, and README.
+ 
+What I did myself
+- Worked out the expected deposit for each reservation by hand from the brief's
+  rules, independently of the code, and used that as the reference to check the
+  matcher's output against the bank feed.
+- Derived and verified the GuestyPay fee formula. The brief gives 2.9% + $0.30
+  but not the rounding order or whether taxes are in the base. I picked one
+  reading and confirmed it reproduces all four GuestyPay settlements in the bank
+  file to the cent. A different rounding order is off by a penny on at least one.
+- Wrote the unit test that exposed the refund-netting bug below, and reviewed and
+  corrected the fix.
+- Decided the twelve assumptions in the README. Where the brief is ambiguous, the
+  choice of what to assume and what to flag is mine, not the model's.
+- Reviewed the plan before implementation and ran the test suite.
+ 
+Example where the AI got something wrong, and how I caught it
+The first version of the matcher matched a refunded Airbnb reservation's original
+deposit on its own and never looked for the negative refund adjustment that
+followed it. The adjustment was left over as an orphan "unmatched refund", and the
+reservation was reported as fully reconciled even though the bank had clawed back
+part of it. The real data did not expose this: R1014's two legs are each off by
+4.65, so it took a different code path. I wrote a unit test for the clean case
+(deposit 240, later adjustment -50 on a reservation refunded 50) and it failed
+with status "reconciled" instead of "reconciled (refund netted)". The fix attaches
+the adjustment to the existing match (step 1b in payout_recon/reconcile.py).
+ 
+A second, smaller one: the first draft of the exceptions list left out matches that
+only reconciled within a tolerance (R1018, off by $0.02) or net of a refund (R1014).
+The brief asks for "anything that doesn't reconcile", so I added them as
+`matched_with_variance`.
