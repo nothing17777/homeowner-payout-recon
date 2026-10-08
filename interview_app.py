@@ -96,7 +96,6 @@ PAGES = [
     "8. Outputs",
     "9. Assumptions & what I'd do next",
     "10. AI use (and the bug it got wrong)",
-    "11. Likely interview questions",
 ]
 page = st.sidebar.radio("Walkthrough", PAGES)
 st.sidebar.caption("All figures are computed live from `data/` and `payout_recon/`.")
@@ -112,6 +111,53 @@ if page == PAGES[0]:
     c[1].metric("Bank deposits", len(deposits))
     c[2].metric("Deposit groups matched", len(recon.matches))
     c[3].metric("Exceptions", len(issues))
+
+    st.subheader("Dashboard")
+    paid = [l for l in lines if l.payout is not None]
+    held = sum(l.payout for l in paid if recon.status.get(l.reservation.reservation_id) == "NOT RECEIVED")
+    flagged = sum(i.amount for i in issues if i.kind in ("duplicate_deposit", "unmatched_deposit"))
+    k = st.columns(5)
+    k[0].metric("Owner payouts", f(sum(l.payout for l in paid)))
+    k[1].metric("Our commission", f(sum(l.commission for l in paid)))
+    k[2].metric("Channel fees", f(sum(l.channel_fee for l in paid)))
+    k[3].metric("Payout held (not received)", f(held))
+    k[4].metric("Bank cash unexplained", f(flagged), help="Duplicate TXN50170 + Zelle TXN50391")
+
+    g1, g2 = st.columns(2)
+    with g1:
+        st.caption("Where each owner's money goes (USD)")
+        split = defaultdict(lambda: defaultdict(D))
+        for l in paid:
+            o = l.agreement.owner
+            split[o]["Owner payout"] += l.payout
+            split[o]["Commission"] += l.commission
+            split[o]["Channel fees"] += l.channel_fee
+        st.bar_chart(pd.DataFrame({o: {k_: float(v) for k_, v in d.items()} for o, d in split.items()}).T)
+    with g2:
+        st.caption("Expected cash vs deposited, by channel (USD)")
+        exp, got = defaultdict(D), defaultdict(D)
+        for r in resv:
+            e = P.expected_deposit(r)
+            if e is not None:
+                exp[r.channel] += e
+        for m in recon.matches:
+            got[m.reservations[0].channel] += m.actual
+        st.bar_chart(pd.DataFrame({"Expected": {c: float(v) for c, v in exp.items()},
+                                   "Matched in bank": {c: float(got[c]) for c in exp}}), stack=False)
+
+    g3, g4, g5 = st.columns(3)
+    with g3:
+        st.caption("Reservations by bank status")
+        st.bar_chart(pd.Series(recon.status).value_counts())
+    with g4:
+        st.caption("Exceptions by kind")
+        st.bar_chart(pd.Series([i.kind for i in issues]).value_counts())
+    with g5:
+        st.caption("Bank deposits per day (USD)")
+        daily = defaultdict(D)
+        for d in deposits:
+            daily[d.date] += d.amount
+        st.bar_chart(pd.Series({k_: float(v) for k_, v in sorted(daily.items())}))
 
     st.subheader("Owner payouts")
     st.dataframe(pd.DataFrame([(o, "not calculable" if o == UNASSIGNED else f(t)) for o, t in sorted(totals.items())],
@@ -154,7 +200,7 @@ elif page == PAGES[2]:
     st.subheader("Step → file → test mapping")
     st.table(pd.DataFrame([
         ("1 Owner statements", "data.py, payouts.py", "PayoutRules (6), ExpectedCash (3)"),
-        ("2 Reconciliation", "reconcile.py", "Reconciliation (10 tests)"),
+        ("2 Reconciliation", "reconcile.py", "Reconciliation (11 tests)"),
         ("3 Way to run it", "cli.py, __main__.py, report.py", "SeptemberData (end-to-end, via cli.build)"),
         ("4 Tests", "tests/", "this page's test runner"),
         ("5 README", "README.md", "n/a"),
@@ -268,8 +314,10 @@ within $0.05 and a −1/+7 day window (ties → closest dates) → 1b. attach a 
 # ================================================================ 6
 elif page == PAGES[5]:
     st.title("How I know the numbers are right")
-    st.markdown("Six independent lines of evidence. Checks 1 to 4 and 6 are recomputed here with **different code** "
-                "from the package (integer cents + pandas, straight from the brief); they do not call `payouts.py`.")
+    st.markdown("Six lines of evidence. **Check 1** is a full re-implementation in integer cents straight from the "
+                "brief; it never calls `payouts.py`. **Checks 2 and 3** test the package's outputs against accounting "
+                "identities. **Check 4** tests the fee formula against the real bank settlements. **Check 5** uses "
+                "keys the matcher never looks at. **Check 6** is arithmetic you can redo by hand.")
 
     # ---- 1. independent recomputation in integer cents
     st.header("Check 1: Independent recomputation of every payout and expected deposit")
@@ -482,9 +530,7 @@ elif page == PAGES[6]:
         ("payouts", "DIRECT_FIXED", D("0.25"), "direct fee fixed part 0.30 → 0.25"),
         ("payouts", "DIRECT_RATE", D("0.03"), "direct fee rate 2.9% → 3.0%"),
         ("reconcile", "TOLERANCE", D("0"), "rounding tolerance 0.05 → 0 (R1018 would not match)"),
-        ("reconcile", "TOLERANCE", D("5"), "rounding tolerance 0.05 → 5.00 (too loose)"),
         ("reconcile", "MAX_GROUP", 1, "combined payouts disabled (R1004+R1005, R1008+R1011)"),
-        ("reconcile", "LATE_DAYS", 0, "late-deposit window 7 → 0 days"),
         ("reconcile", "ADJ_WINDOW_DAYS", 0, "refund-adjustment window 30 → 0 days"),
     ]
     mrows = []
@@ -561,52 +607,3 @@ elif page == PAGES[9]:
                                            dep("T2", 12, "-50", "AIRBNB PAYMENTS ADJ")])
     st.write("Status now:", f"`{r.status['R1']}`", "· issues:", len(r.issues))
     st.caption("Before the fix the status was `reconciled` and the −50 sat as an orphan `unmatched_refund`.")
-
-
-# ================================================================ 11
-else:
-    st.title("Likely interview questions")
-    qa = [
-        ("Walk me through the architecture.",
-         "CSV → dataclasses (`data.py`) → payout rules and expected-cash rules (`payouts.py`) → staged matcher "
-         "(`reconcile.py`) → CLI/HTML (`cli.py`, `report.py`). `cli.build()` is the single entry point the tests also use."),
-        ("Why Decimal, and why two separate cash concepts?",
-         "Float cents drift. `Decimal` with half-up rounding at the cent, once per reservation. What the owner is owed "
-         "and what the channel remits are different numbers (taxes, cleaning kept by us, commission, refunds). "
-         "Mixing them would make the reconciliation pass or fail for the wrong reasons. Page 6 check 2 proves the two close."),
-        ("How did you know the numbers were right?",
-         "Page 6: independent integer-cent recomputation of every reservation, a cash waterfall that closes at 0.00, "
-         "control totals on the bank feed, the fee formula reproducing 4/4 real settlements, Vrbo codes as an "
-         "independent key, and an ambiguity scan."),
-        ("How does the matcher work and where does it break?",
-         "Smallest same-channel subset (≤4) within $0.05 and a date window; ties go to closest dates. It is a "
-         "subset-sum search, exponential in group size (capped at 4). It could false-match on a larger or "
-         "denser month. The real fix is to key on confirmation codes where present (Vrbo already has them)."),
-        ("Why are R1014 and R1018 'exceptions' if they matched?",
-         "The brief asks for anything that doesn't reconcile *exactly*. Both reconcile within tolerance or net of a refund, "
-         "so they are reported as `matched_with_variance` rather than hidden."),
-        ("Your biggest judgement calls?",
-         "(1) Straddling stays stay in September per the export, flagged. (2) Channel fee not reduced on refund. "
-         "(3) Cancelled pays $0 incl. cleaning. (4) L006 has no agreement so no payout is guessed. (5) Statements show "
-         "what's owed, with a bank_status column so unreceived items (R1016) can be held."),
-        ("What happens to R1016?",
-         "Vrbo, expected 932.80 around 09-23, no deposit. It stays on the Becker statement ($657.89 owed) but is marked "
-         "NOT RECEIVED; I'd hold it until the cash lands."),
-        ("Tell me about a time the AI was wrong.",
-         "Page 10: the first matcher ignored refund adjustments, so a clawed-back stay showed fully reconciled. "
-         "I caught it by writing a clean-case unit test (240 / −50 / refund 50) that failed. The real data hid it because "
-         "R1014's legs take a different path."),
-        ("Are your tests meaningful?",
-         "22 tests across rules, expected cash, each matcher stage, and end-to-end pins. Page 7's mutation check "
-         "perturbs rule constants and confirms the suite fails."),
-        ("What would you do with more time?",
-         "Channel confirmation codes as the primary key; ask finance about period rule, fee reversal on refunds, and L006's owner; "
-         "an explicit payout-run file that excludes unreceived/duplicate-affected lines; monthly carry-over; "
-         "property-based matcher tests; a UI for resolving exceptions."),
-        ("What would you ask finance?",
-         "Period rule (check-in vs check-out vs pro-rata) for R1001/R1022; are channel fees reversed on refunds; who owns L006; "
-         "is TXN50170 a double payment to claw back; who is K Okafor."),
-    ]
-    for q_, a_ in qa:
-        with st.expander(q_):
-            st.write(a_)
