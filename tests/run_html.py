@@ -39,7 +39,7 @@ def main():
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Test results - Payout Reconciliation</title>
 <style>
-body{{font:14px/1.5 system-ui,sans-serif;margin:2rem auto;max-width:1000px;padding:0 1rem;color:#222}}
+body{{font:14px/1.5 system-ui,sans-serif;margin:2rem auto;max-width:1000px;padding:0 1rem;color:#222;background:#fff;color-scheme:light}}
 table{{border-collapse:collapse;width:100%}} th,td{{border:1px solid #ddd;padding:.35rem .6rem;text-align:left;vertical-align:top}}
 th{{background:#f4f4f4}} .pass td:first-child{{color:#0a7d2c;font-weight:600}}
 .fail td:first-child,.error td:first-child{{color:#b00020;font-weight:600}} pre{{margin:0;white-space:pre-wrap}}
