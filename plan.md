@@ -1,52 +1,49 @@
 # Plan: Homeowner Payout Reconciliation (Sept 2026)
 
-Status: **complete**. Written retrospectively from the finished project (see `BRIEF.md`, `README.md`).
+Status: **complete**. See `BRIEF.md` for the task and `README.md` for results and assumptions.
 
-## Goal
+## How the plan was made
 
-From `reservations.csv`, `owner_agreements.csv` and `bank_deposits.csv`, produce (1) owner payout statements, (2) a bank reconciliation with a reason for every item that does not reconcile, (3) a way to run it, (4) tests, (5) README, (6) `AI_use.txt`.
+The plan covers the first 5 deliverables in the brief. Each step was handed to its own subagent, so each step's design came from a separate pass aimed at the best solution for that step. `AI_use.txt` (deliverable 6) is hand-written and is not part of this plan.
 
-## Design decisions
+Shared constraints for all steps: Python 3.9+, standard library only, `unittest`; all money is `Decimal` rounded half-up to the cent (`data.q()`), never float; ambiguous rules become written assumptions, and missing data is flagged rather than guessed.
 
-- Python 3.9+, standard library only, `unittest`. No install step.
-- All money is `Decimal`, rounded half-up to the cent via `data.q()`. No floats.
-- Two separate cash concepts: `owner_payout()` (what the owner is owed) vs `expected_deposit()` / `expected_date()` (what the channel should remit). Reconciliation compares only the latter to the bank.
-- Missing data is flagged, not guessed (L006 has no agreement, so payout is `None` and the owner is "UNASSIGNED").
-- Ambiguous rules become written assumptions (README list) rather than silent choices.
+## The 5 steps
 
-## Pipeline
+### Step 1: Owner statements (`data.py`, `payouts.py`)
 
-`data.py` (CSV to dataclasses) -> `payouts.py` (money rules) -> `reconcile.py` (matching) -> `cli.py` (wiring + output). `cli.build()` is the single entry point, shared with tests.
+- Load the three CSVs into dataclasses.
+- `owner_payout()` = (accommodation - refund) - channel fee - commission on (gross - fee) + cleaning only if `cleaning_fee_to = owner`. Taxes are never owner money.
+- Direct channel fee = 2.9% x (accommodation + cleaning + taxes) + $0.30.
+- Cancelled stays pay $0. A listing with no agreement (L006) gets `payout=None` and an UNASSIGNED owner bucket.
+- Verify: direct fee reproduces all 4 GuestyPay settlements to the cent.
 
-## Steps
+### Step 2: Reconciliation (`reconcile.py`)
 
-| # | Step | Verify |
-|---|------|--------|
-| 1 | Unzip pack, read brief and the three CSVs, note data quirks | Quirks listed (L006, duplicate deposit, Zelle, refund, month-straddling stays) |
-| 2 | `data.py`: loaders, dataclasses, `q()` rounding | Loads all rows |
-| 3 | `payouts.py`: owner payout, channel fee, expected deposit and date per channel | Direct fee reproduces all 4 GuestyPay settlements to the cent |
-| 4 | `reconcile.py` staged matcher (below) | Matches every deposit that has a legitimate explanation |
-| 5 | `cli.py`: run command, 4 CSV outputs, console summary | `python3 -m payout_recon` |
-| 6 | Tests on payout rules and matcher | `python3 -m unittest discover -s tests` (22 tests) |
-| 7 | README (run, assumptions, more-time list), `AI_use.txt` | Brief checklist satisfied |
-| 8 | Commit `output/` so results are readable without running | Present in repo |
+- `expected_deposit()` / `expected_date()` model the cash each channel should remit (Airbnb excludes taxes, Vrbo includes them, direct is net of the processing fee). Kept separate from owner payout.
+- Staged matcher, order matters:
+  0. Drop and flag exact-duplicate deposits.
+  1. Match each positive deposit to the smallest subset (max 4) of same-channel reservations summing to it within $0.05, inside the date window (-1 to +7 days); ties go to the closest dates.
+  1b. Attach a later negative deposit equal to a reservation's refund.
+  2. Pair an unmatched refunded reservation with a deposit plus adjustment that net correctly.
+  3. Everything left becomes an `Issue` with a reason.
+- Matches that only reconcile within tolerance or net of a refund are still reported as `matched_with_variance`.
 
-### Matcher stages (order matters)
+### Step 3: Way to run it (`cli.py`, `__main__.py`)
 
-0. Drop exact-duplicate deposits (same date, amount, description) and flag them.
-1. Match each positive deposit to the smallest subset (max 4) of same-channel reservations whose expected cash sums to it within tolerance ($0.05), inside the date window (-1 to +7 days); ties broken by closest dates.
-1b. Attach a later negative deposit equal to a reservation's refund.
-2. Pair an unmatched refunded reservation with a deposit plus adjustment that net correctly.
-3. Everything left becomes an `Issue`.
+- CLI: `python3 -m payout_recon [--data DIR] [--out DIR]`, prints a summary.
+- `cli.build()` is the single entry point, shared with the tests.
+- Writes `output/`: `owner_statement_lines.csv`, `owner_totals.csv`, `reconciliation_exceptions.csv`, `reconciliation_matches.csv`. Outputs are committed so results are readable without running anything.
 
-Channel is inferred from the deposit description (AIRBNB, VRBO/HOMEAWAY, GUESTYPAY).
+### Step 4: Tests (`tests/test_payouts_and_recon.py`)
 
-## Outputs (`output/`)
+- 22 `unittest` tests on the parts that matter most: payout rules, direct fee, expected deposits, each matcher stage (duplicates, combined payouts, missing deposit, refund netting, tolerance).
+- `SeptemberData` pins the exact exception set and the four owner totals.
+- Run: `python3 -m unittest discover -s tests`
 
-- `owner_statement_lines.csv`: one row per reservation with gross, fee, commission, cleaning, payout, bank status
-- `owner_totals.csv`: payout per owner
-- `reconciliation_exceptions.csv`: 9 items, each with a reason
-- `reconciliation_matches.csv`: audit trail of deposit-to-reservation matches
+### Step 5: README (`README.md`)
+
+- How to run, the September result table, the 9 exceptions, all 12 assumptions, and a "with more time" list.
 
 ## Results
 
@@ -59,15 +56,6 @@ Channel is inferred from the deposit description (AIRBNB, VRBO/HOMEAWAY, GUESTYP
 | Unassigned (L006) | not calculable |
 
 Exceptions: R1016 no deposit; TXN50170 duplicate of TXN50153; TXN50391 unidentified Zelle ($450); L006 no owner; R1014 refund netting; R1018 $0.02 rounding; R1001 and R1022 straddle the month.
-
-## Key assumptions (full list in README)
-
-Period = every row in the Sept export; commission on (gross - fee), half-up per reservation; refunds reduce gross but not the channel fee; cancelled stays pay $0 including cleaning; taxes never owner money; direct settles first Monday strictly after check-in.
-
-## Lessons from building
-
-- Refunded Airbnb reservation initially looked fully reconciled because the later negative adjustment was never attached; fixed with stage 1b, caught by a unit test on a clean case.
-- Within-tolerance and refund-netted matches must still appear in the exceptions list (`matched_with_variance`).
 
 ## Next, with more time
 
