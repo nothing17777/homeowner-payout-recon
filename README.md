@@ -11,6 +11,17 @@ python3 -m unittest discover -s tests   # 22 tests
 python3 tests/run_html.py               # same tests, written to output/test.html
 ```
 
+### Interview walkthrough (Streamlit, optional)
+
+The core package needs no install. The walkthrough app is the only part with dependencies:
+
+```bash
+pip install -r requirements.txt
+streamlit run interview_app.py
+```
+
+It recomputes everything live from `data/` and `payout_recon/`: worked payout examples, the deposit-by-deposit reconciliation, an independent recomputation and control totals, the live test run with a mutation check, and the outputs.
+
 Outputs (`output/`, committed so you can read them without running anything):
 
 | File | Contents |
